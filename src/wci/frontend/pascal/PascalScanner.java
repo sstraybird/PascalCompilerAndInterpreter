@@ -4,6 +4,7 @@ import wci.frontend.EofToken;
 import wci.frontend.Scanner;
 import wci.frontend.Source;
 import wci.frontend.Token;
+import wci.frontend.pascal.tokens.*;
 
 import static wci.frontend.Source.EOF;
 
@@ -29,16 +30,53 @@ public class PascalScanner extends Scanner {
      */
     @Override
     protected Token extractToken() throws Exception {
+
+        skipWhiteSpae();
         Token token;
         char currentChar = currentChar();
 
         //Construct the next token.The current character determines the token type.
         if(currentChar == EOF){
             token = new EofToken(source);
+        }else if(Character.isLetter(currentChar)) {
+            token = new PascalWordToken(source);
+        }else if(Character.isDigit(currentChar)){
+            token = new PascalNumberToken(source);
+        }else if(currentChar == '\''){
+            token = new PascalStringToken(source);
+        }else if(PascalTokenType.SPECIAL_SYMBOLS.containsKey(Character.toString(currentChar))){
+            token = new PascalSpecialSymbolToken(source) ;
         }else {
-            token = new Token(source) ;
+            token = new PascalErrorToken(source,PascalErrorCode.INVALID_CHARACTER,Character.toString(currentChar));
+            nextChar(); //consume character
         }
 
         return token;
+    }
+
+    /**
+     * Skip whitespace characters by consuming them. A comment is whitespace.
+     * @throws Exception if an error occurred.
+     */
+    private void skipWhiteSpae() throws Exception{
+        char currentChar = currentChar();
+
+        while (Character.isWhitespace(currentChar) || (currentChar == '{')){
+            //Start of a comment?
+            if(currentChar == '{'){
+                do {
+                    currentChar = nextChar();
+                }while((currentChar!='}') && (currentChar != EOF));
+
+                //Found closing '}'?
+                if(currentChar == '}'){
+                    currentChar = nextChar();
+                }
+            }
+            //Not a comment.
+            else {
+                currentChar = nextChar();
+            }
+        }
     }
 }

@@ -4,16 +4,20 @@ import wci.backend.BackendFactory;
 import wci.frontend.*;
 import wci.frontend.pascal.PascalParserTD;
 import wci.frontend.pascal.PascalScanner;
+import wci.frontend.pascal.PascalTokenType;
 import wci.intermediate.ICode;
 import wci.intermediate.SymTab;
 import wci.message.Message;
 import wci.message.MessageListener;
 import wci.message.MessageType;
 
+import javax.print.DocFlavor;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.spi.TimeZoneNameProvider;
+
+import static wci.frontend.pascal.PascalTokenType.STRING;
 
 /**
  * <h1>Pascal</h1>
@@ -82,11 +86,16 @@ public class Pascal {
         }
     }
 
+
+    private static final String TOKEN_FORMAT = ">>> %-15s line=%03d, pos=%2d, text=\"%s\"";
+    private static final String VALUE_FORMAT = ">>>                 value=%s";
+
     private static final String PARSER_SUMMARY_FORMAT =
             "\n%,20d source lines."+
             "\n%,20d syntax errors." +
             "\n%,20.2f seconds total parsing time.\n";
 
+    private static final int PREFIX_WIDTH = 5;
     /**
      * Listener for parser message.
      */
@@ -100,7 +109,51 @@ public class Pascal {
         public void messageReceived(Message message) {
             MessageType type = message.getType();
 
+
             switch (type){
+                case TOKEN: {
+                    Object body[] = (Object[]) message.getBody();
+                    int line = (Integer) body[0];
+                    int position = (Integer) body[1];
+                    TokenType tokenType = (TokenType) body[2];
+                    String tokenText = (String) body[3];
+                    Object tokenValue = body[4];
+
+                    System.out.println(String.format(TOKEN_FORMAT,tokenType,line,position,tokenText));
+                    if(tokenValue != null){
+                        if(tokenType == STRING){
+                            tokenValue = "\"" + tokenValue + "\"";
+                        }
+                        System.out.println(String.format(VALUE_FORMAT,tokenValue));
+                    }
+                    break;
+                }
+
+                case SYNTAX_ERROR:{
+                    Object body[] = (Object[])message.getBody();
+                    int lineNumber = (Integer)body[0] ;
+                    int position = (Integer)body[1];
+                    String tokenText = (String)body[2];
+                    String errorMessage = (String)body[3];
+
+                    int spaceCount = PREFIX_WIDTH + position;
+                    StringBuffer flagBuffer = new StringBuffer() ;
+
+                    // Space up to the error position.
+                    for(int i=1;i<spaceCount;++i){
+                        flagBuffer.append(' ') ;
+                    }
+
+                    // A pointer to the error followed by the error message.
+                    flagBuffer.append("^\n*** ").append(errorMessage);
+
+                    // Text, if any, of the bad token
+                    if(tokenText != null){
+                        flagBuffer.append(" [at \"").append(tokenText).append("\"]");
+                    }
+                    System.out.println(flagBuffer.toString());
+                    break;
+                }
                 case PARSER_SUMARY:{
                     Number body[] = (Number[])message.getBody();
                     int statementCount = (Integer)body[0];
@@ -163,6 +216,11 @@ public class Pascal {
      * @param args comand-line arguments: "compile" or "execute" followed by optional flags followed by the source file path.
      */
     public static void main(String[] args) {
+
+        PascalTokenType plus = PascalTokenType.PLUS;
+        PascalTokenType error = PascalTokenType.ERROR;
+        System.out.println(plus.toString());
+        System.out.println(error.toString());
         try{
             String operation = args[0];
 
