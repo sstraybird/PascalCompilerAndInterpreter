@@ -7,9 +7,11 @@ import wci.frontend.pascal.PascalScanner;
 import wci.frontend.pascal.PascalTokenType;
 import wci.intermediate.ICode;
 import wci.intermediate.SymTab;
+import wci.intermediate.SymTabStack;
 import wci.message.Message;
 import wci.message.MessageListener;
 import wci.message.MessageType;
+import wci.util.CrossReferencer;
 
 import javax.print.DocFlavor;
 import java.io.BufferedReader;
@@ -29,7 +31,7 @@ public class Pascal {
     private Parser parser;          //language-independent parser
     private Source source;          //language-independent scanner
     private ICode iCode;            //generated intermediate code
-    private SymTab symTab;          //generated symbol table
+    private SymTabStack symTabStack;          //generated symbol table
     private Backend backend;        //backend
 
     public Pascal(String operation,String filePath,String flags){
@@ -50,9 +52,13 @@ public class Pascal {
             source.close();
 
             iCode = parser.getiCode();
-            symTab = parser.getSymTab();
+            symTabStack = parser.getSymTabStack();
 
-            backend.process(iCode,symTab);
+            if(xref){
+                CrossReferencer crossReferencer = new CrossReferencer();
+                crossReferencer.print(symTabStack);
+            }
+            backend.process(iCode,symTabStack);
         }catch (Exception ex){
             System.out.println("*****Internal translator error.*****");
             ex.printStackTrace();
