@@ -9,8 +9,9 @@ import wci.frontend.pascal.PascalTokenType;
 import wci.intermediate.ICodeFactory;
 import wci.intermediate.ICodeNode;
 
-import static wci.frontend.pascal.PascalTokenType.IDENTIFIER;
-import static wci.frontend.pascal.PascalTokenType.SEMICOLON;
+import java.util.EnumSet;
+
+import static wci.frontend.pascal.PascalTokenType.*;
 import static wci.intermediate.icodeimpl.ICodeKeyImpl.LINE;
 import static wci.intermediate.icodeimpl.ICodeNodeTypeImpl.NO_OP;
 
@@ -23,6 +24,15 @@ public class StatementParser extends PascalParserTD {
     public StatementParser(PascalParserTD parent) {
         super(parent);
     }
+
+    // Synchronization set for starting a statement.
+    protected static final EnumSet<PascalTokenType> STMT_START_SET =
+            EnumSet.of(BEGIN, CASE, FOR, PascalTokenType.IF, REPEAT, WHILE,
+                    IDENTIFIER, SEMICOLON);
+
+    // Synchronization set for following a statement.
+    protected static final EnumSet<PascalTokenType> STMT_FOLLOW_SET =
+            EnumSet.of(SEMICOLON, END, ELSE, UNTIL, DOT);
 
     /**
      * Parse a statement
@@ -43,6 +53,31 @@ public class StatementParser extends PascalParserTD {
             case IDENTIFIER:{
                 AssignmentStatementParser assignmentParser = new AssignmentStatementParser(this);
                 statementNode = assignmentParser.parse(token);
+                break;
+            }
+            case REPEAT:{
+                RepeatStatementParser repeatParser = new RepeatStatementParser(this);
+                statementNode = repeatParser.parse(token);
+                break;
+            }
+            case WHILE:{
+                WhileStatementParser whileParser = new WhileStatementParser(this);
+                statementNode = whileParser.parse(token);
+                break;
+            }
+            case FOR:{
+                ForStatementParser forParser = new ForStatementParser(this);
+                statementNode = forParser.parse(token);
+                break;
+            }
+            case IF:{
+                IfStatementParser ifParser = new IfStatementParser(this);
+                statementNode = ifParser.parse(token);
+                break;
+            }
+            case CASE:{
+                CaseStatementParser caseParser = new CaseStatementParser(this);
+                statementNode = caseParser.parse(token);
                 break;
             }
             default:{
@@ -106,4 +141,5 @@ public class StatementParser extends PascalParserTD {
             errorHandler.flag(token,errorCode,this);
         }
     }
+
 }
