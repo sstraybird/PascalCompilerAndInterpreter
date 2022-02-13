@@ -1,5 +1,7 @@
 package wci.intermediate.symtabimpl;
 
+import wci.intermediate.TypeSpec;
+import wci.intermediate.Definition;
 import wci.intermediate.SymTab;
 import wci.intermediate.SymTabEntry;
 import wci.intermediate.SymTabKey;
@@ -17,6 +19,9 @@ public class SymTabEntryImpl extends HashMap<SymTabKey,Object> implements SymTab
     private String name;            //entry name
     private SymTab symTab;          // parent symbol table
     private ArrayList<Integer> lineNumbers;     //source line numbers
+
+    private Definition definition;      //how the identifier is defined
+    private TypeSpec typeSpec;          // type specification
 
     /**
      * Constructor
@@ -79,5 +84,25 @@ public class SymTabEntryImpl extends HashMap<SymTabKey,Object> implements SymTab
     @Override
     public Object getAttribute(SymTabKey key) {
         return get(key);
+    }
+
+    @Override
+    public void setDefinition(Definition definition) {
+        this.definition = definition;
+    }
+
+    @Override
+    public Definition getDefinition() {
+        return definition;
+    }
+
+    @Override
+    public void setTypeSpec(TypeSpec typeSpec) {
+        this.typeSpec = typeSpec;
+    }
+
+    @Override
+    public TypeSpec getTypeSpec() {
+        return typeSpec;
     }
 }

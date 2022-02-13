@@ -7,6 +7,7 @@ import wci.frontend.pascal.PascalScanner;
 import wci.frontend.pascal.PascalTokenType;
 import wci.intermediate.ICode;
 import wci.intermediate.SymTab;
+import wci.intermediate.SymTabEntry;
 import wci.intermediate.SymTabStack;
 import wci.message.Message;
 import wci.message.MessageListener;
@@ -22,6 +23,7 @@ import java.sql.SQLOutput;
 import java.util.spi.TimeZoneNameProvider;
 
 import static wci.frontend.pascal.PascalTokenType.STRING;
+import static wci.intermediate.symtabimpl.SymTabKeyImpl.ROUTINE_ICODE;
 
 /**
  * <h1>Pascal</h1>
@@ -53,17 +55,22 @@ public class Pascal {
             parser.parse();
             source.close();
 
-            iCode = parser.getiCode();
-            symTabStack = parser.getSymTabStack();
+            if(parser.getErrorCount() == 0){
+                symTabStack = parser.getSymTabStack();
 
-            if(xref){
-                CrossReferencer crossReferencer = new CrossReferencer();
-                crossReferencer.print(symTabStack);
+                SymTabEntry programId = symTabStack.getProgramId();
+                iCode = (ICode) programId.getAttribute(ROUTINE_ICODE);
+
+                if(xref){
+                    CrossReferencer crossReferencer = new CrossReferencer();
+                    crossReferencer.print(symTabStack);
+                }
+                if(intermediate){
+                    ParseTreePrinter treePrinter = new ParseTreePrinter(System.out);
+                    treePrinter.print(iCode);
+                }
             }
-            if(intermediate){
-                ParseTreePrinter treePrinter = new ParseTreePrinter(System.out);
-                treePrinter.print(iCode);
-            }
+
             backend.process(iCode,symTabStack);
         }catch (Exception ex){
             System.out.println("*****Internal translator error.*****");
@@ -255,11 +262,6 @@ public class Pascal {
      * @param args comand-line arguments: "compile" or "execute" followed by optional flags followed by the source file path.
      */
     public static void main(String[] args) {
-
-        PascalTokenType plus = PascalTokenType.PLUS;
-        PascalTokenType error = PascalTokenType.ERROR;
-        System.out.println(plus.toString());
-        System.out.println(error.toString());
         try{
             String operation = args[0];
 
