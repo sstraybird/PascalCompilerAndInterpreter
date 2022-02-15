@@ -6,6 +6,9 @@ import wci.frontend.pascal.PascalParserTD;
 import wci.frontend.pascal.PascalTokenType;
 import wci.intermediate.ICodeFactory;
 import wci.intermediate.ICodeNode;
+import wci.intermediate.TypeSpec;
+import wci.intermediate.symtabimpl.Predefined;
+import wci.intermediate.typeimpl.TypeChecker;
 
 import static wci.intermediate.icodeimpl.ICodeNodeTypeImpl.LOOP;
 import static wci.intermediate.icodeimpl.ICodeNodeTypeImpl.TEST;
@@ -45,9 +48,15 @@ public class RepeatStatementParser extends StatementParser{
         // The TEST node adopts the expression subtree as its only child.
         // The LOOP node adopts the TEST node.
         ExpressionParser expressionParser = new ExpressionParser(this);
-        testNode.addChild(expressionParser.parse(token));
+        ICodeNode exprNode = expressionParser.parse(token) ;
+        testNode.addChild(exprNode);
         loopNode.addChild(testNode);
 
+        // Type check: The test expression must be boolean.
+        TypeSpec exprType = exprNode != null ? exprNode.getTypeSpec(): Predefined.undefinedType;
+        if(!TypeChecker.isBoolean(exprType)){
+            errorHandler.flag(token,PascalErrorCode.INCOMPATIBLE_TYPES,this);
+        }
         return loopNode;
     }
 }

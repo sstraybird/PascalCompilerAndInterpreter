@@ -22,7 +22,7 @@ public class SymTabImpl extends TreeMap<String, SymTabEntry> implements SymTab {
 
     @Override
     public int getNestingLevel() {
-        return 0;
+        return nestingLevel;
     }
 
     /**

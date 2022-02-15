@@ -6,6 +6,9 @@ import wci.frontend.pascal.PascalParserTD;
 import wci.frontend.pascal.PascalTokenType;
 import wci.intermediate.ICodeFactory;
 import wci.intermediate.ICodeNode;
+import wci.intermediate.TypeSpec;
+import wci.intermediate.symtabimpl.Predefined;
+import wci.intermediate.typeimpl.TypeChecker;
 
 import javax.swing.plaf.nimbus.State;
 import java.util.EnumSet;
@@ -50,7 +53,14 @@ public class IfStatementParser extends StatementParser{
         // parse the expression.
         // The IF node adopts the expression subtree as its first child
         ExpressionParser expressionParser = new ExpressionParser(this);
-        ifNode.addChild(expressionParser.parse(token));
+        ICodeNode exprNode = expressionParser.parse(token) ;
+        ifNode.addChild(exprNode);
+
+        // Type Check: The expression type must be boolean.
+        TypeSpec exprType = exprNode != null ? exprNode.getTypeSpec(): Predefined.undefinedType;
+        if(!TypeChecker.isBoolean(exprType)){
+            errorHandler.flag(token,PascalErrorCode.INCOMPATIBLE_TYPES,this);
+        }
 
         //Synchronize at the THEN
         token = synchronize(THEN_SET);

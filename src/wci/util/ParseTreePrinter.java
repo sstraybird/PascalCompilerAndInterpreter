@@ -1,9 +1,6 @@
 package wci.util;
 
-import wci.intermediate.ICode;
-import wci.intermediate.ICodeKey;
-import wci.intermediate.ICodeNode;
-import wci.intermediate.SymTabEntry;
+import wci.intermediate.*;
 import wci.intermediate.icodeimpl.ICodeNodeImpl;
 
 import java.io.PrintStream;
@@ -91,6 +88,27 @@ public class ParseTreePrinter {
      * @param node the parse tree node.
      */
     private void printTypeSpec(ICodeNodeImpl node) {
+        TypeSpec typeSpec = node.getTypeSpec();
+        if(typeSpec != null){
+            String saveMargin = indentation;
+            indentation += indent;
+
+            String typeName;
+            SymTabEntry typeId = typeSpec.getIdentifier();
+
+            // Named type: Print the type identifier's name.
+            if(typeId != null){
+                typeName = typeId.getName();
+            }
+
+            // Unnamed type:Print an artificial type identifier name.
+            else{
+                int code = typeSpec.hashCode() + typeSpec.getForm().hashCode();
+                typeName = "$anon_"+Integer.toHexString(code);
+            }
+            printAttribute("TYPE_ID",typeName);
+            indentation = saveMargin ;
+        }
     }
 
     private void printChildNodes(ArrayList<ICodeNode> childNodes){
