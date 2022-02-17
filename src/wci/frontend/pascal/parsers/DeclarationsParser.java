@@ -1,8 +1,10 @@
 package wci.frontend.pascal.parsers;
 
 import wci.frontend.Token;
+import wci.frontend.TokenType;
 import wci.frontend.pascal.PascalParserTD;
 import wci.frontend.pascal.PascalTokenType;
+import wci.intermediate.SymTabEntry;
 
 import java.util.EnumSet;
 
@@ -48,13 +50,13 @@ public class DeclarationsParser extends PascalParserTD {
      * @param token the initial token.
      * @throws Exception if an error occurred.
      */
-    public void parse(Token token) throws Exception{
+    public SymTabEntry parse(Token token, SymTabEntry parentId) throws Exception{
         token = synchronize(DECLARATION_START_SET);
 
         if(token.getType() == CONST){
             token = nextToken();        //consume CONST
             ConstantDefinitionsParser constantDefinitionParser = new ConstantDefinitionsParser(this);
-            constantDefinitionParser.parse(token);
+            constantDefinitionParser.parse(token,null);
         }
 
         token = synchronize(TYPE_START_SET);
@@ -62,7 +64,7 @@ public class DeclarationsParser extends PascalParserTD {
         if(token.getType() == TYPE){
             token = nextToken();        //consume TYPE
             TypeDefinitionsParser typeDefinitionsParser = new TypeDefinitionsParser(this);
-            typeDefinitionsParser.parse(token);
+            typeDefinitionsParser.parse(token,null);
         }
 
         token = synchronize(VAR_START_SET);
@@ -72,9 +74,26 @@ public class DeclarationsParser extends PascalParserTD {
 
             VariableDeclarationsParser variableDeclarationsParser = new VariableDeclarationsParser(this);
             variableDeclarationsParser.setDefinition(VARIABLE);
-            variableDeclarationsParser.parse(token);
+            variableDeclarationsParser.parse(token,null);
         }
 
         token = synchronize(ROUTINE_START_SET) ;
+        TokenType tokenType = token.getType();
+
+        while ((tokenType == PROCEDURE) || (tokenType == FUNCTION)){
+            DeclaredRoutineParser routineParser = new DeclaredRoutineParser(this);
+            routineParser.parse(token,parentId);
+
+            // Look for one or more semicolons after a definition.
+            token = currentToken();
+            if(token.getType() == SEMICOLON){
+                while (token.getType() == SEMICOLON){
+                    token = nextToken();    //consume the ;
+                }
+            }
+            token = synchronize(ROUTINE_START_SET);
+            tokenType = token.getType();
+        }
+        return null;
     }
 }

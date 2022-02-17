@@ -67,7 +67,7 @@ public class Pascal {
                 }
                 if(intermediate){
                     ParseTreePrinter treePrinter = new ParseTreePrinter(System.out);
-                    treePrinter.print(iCode);
+                    treePrinter.print(symTabStack);
                 }
             }
 

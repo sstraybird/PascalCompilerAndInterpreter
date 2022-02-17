@@ -18,7 +18,14 @@ import static wci.intermediate.icodeimpl.ICodeKeyImpl.ID;
 import static wci.intermediate.icodeimpl.ICodeNodeTypeImpl.ASSIGN;
 import static wci.intermediate.icodeimpl.ICodeNodeTypeImpl.VARIABLE;
 
+/**
+ * <h1>AssignmentStatementParser</h1>
+ * <p>Parse a Pascal assignment statement.</p>
+ */
 public class AssignmentStatementParser extends StatementParser{
+
+    // Set to true to parse a function name as the target of an assignment.
+    private boolean isFunctionTarget = false;
     /**
      * Constructor
      *
@@ -48,7 +55,9 @@ public class AssignmentStatementParser extends StatementParser{
 
         // Parse the target variable.
         VariableParser variableParser = new VariableParser(this);
-        ICodeNode targetNode = variableParser.parse(token);
+        ICodeNode targetNode = isFunctionTarget
+                ? variableParser.parseFunctionNameTarget(token):variableParser.parse(token);
+
         TypeSpec targetType = targetNode != null ? targetNode.getTypeSpec() : Predefined.undefinedType;
 
         // The ASSIGN node adopts the variable node as its first child
@@ -75,5 +84,16 @@ public class AssignmentStatementParser extends StatementParser{
         }
         assignNode.setTypeSpec(targetType);
         return assignNode;
+    }
+
+    /**
+     * Parse an assignment to a function name.
+     * @param token
+     * @return
+     * @throws Exception
+     */
+    public ICodeNode parseFunctionNameAssignment(Token token) throws Exception{
+        isFunctionTarget = true;
+        return parse(token);
     }
 }
